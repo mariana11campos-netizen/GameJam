@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purple QR Code Generator</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://tailwindcss.com"></script>
+    <!-- QRCode.js library for generating QR codes -->
+    <script src="https://cloudflare.com"></script>
+</head>
+<body class="bg-purple-900 min-h-screen flex items-center justify-center p-4 font-sans">
+
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-purple-200">
+        <h1 class="text-3xl font-extrabold text-purple-800 text-center mb-2">QR Code Generator</h1>
+        <p class="text-purple-600 text-center text-sm mb-6">Enter text or a URL to generate your code instantly</p>
+        
+        <!-- Input field -->
+        <div class="mb-6">
+            <input 
+                type="text" 
+                id="text-input" 
+                placeholder="https://example.com" 
+                value="https://example.com"
+                class="w-full px-4 py-3 rounded-lg border-2 border-purple-300 focus:outline-none focus:border-purple-600 text-purple-900 transition-colors"
+            />
+        </div>
+
+        <!-- QR Code Display Area -->
+        <div class="flex justify-center mb-6 p-4 bg-purple-50 rounded-xl border border-purple-100 min-h-[160px] items-center">
+            <div id="qrcode"></div>
+        </div>
+
+        <!-- Action Button -->
+        <button 
+            id="download-btn" 
+            class="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg"
+        >
+            <span>Download PNG Image</span>
+        </button>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const qrcodeContainer = document.getElementById('qrcode');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // Create the QR Code instance
+        const qrcode = new QRCode(qrcodeContainer, {
+            text: textInput.value,
+            width: 200,
+            height: 200,
+            colorDark: "#581c87", // Deep purple color
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Update QR code on input
+        textInput.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            qrcodeContainer.innerHTML = ''; // Clear old QR
+            if (value) {
+                new QRCode(qrcodeContainer, {
+                    text: value,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#581c87",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                downloadBtn.disabled = true;
+                downloadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // Handle Image Download
+        downloadBtn.addEventListener('click', () => {
+            const img = qrcodeContainer.querySelector('img');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = img.src;
+                link.click();
+            } else {
+                // Fallback for canvas-only generation if image hasn't fully rendered
+                const canvas = qrcodeContainer.querySelector('canvas');
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.download = 'qrcode.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
