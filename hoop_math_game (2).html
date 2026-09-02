@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hoop Math</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#111827}
+body{touch-action:none}
+#game{position:relative;width:100%;height:100%;max-width:600px;margin:auto;overflow:hidden;background:linear-gradient(#79d8ff 0 56%,#55b84d 56% 100%);touch-action:none}
+.cloud{position:absolute;background:#fff;border-radius:50px;opacity:.8;filter:blur(.2px)}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud:before{width:45px;height:45px;left:20px;top:-20px}.cloud:after{width:65px;height:65px;right:18px;top:-32px}
+#topbar{position:absolute;z-index:20;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;color:white;font-weight:800;text-shadow:0 2px 3px #234}
+.pill{background:#172554cc;border:2px solid #ffffff55;padding:8px 12px;border-radius:18px;font-size:15px}
+#question{position:absolute;z-index:20;top:58px;left:50%;transform:translateX(-50%);background:#fff;color:#172554;padding:10px 22px;border-radius:20px;font-size:24px;font-weight:900;box-shadow:0 5px 0 #cbd5e1}
+#court{position:absolute;left:0;right:0;bottom:0;height:44%;background:repeating-linear-gradient(90deg,#4db147 0,#4db147 28px,#51b94a 28px,#51b94a 56px);border-top:4px solid #f8fafc55}
+.hoop{position:absolute;z-index:8;width:105px;height:92px;transition:none}
+.backboard{position:absolute;right:8px;top:0;width:12px;height:72px;background:#f8fafc;border:3px solid #cbd5e1;border-radius:4px}
+.rim{position:absolute;right:0;top:56px;width:72px;height:18px;border:6px solid #ef4444;border-top-width:5px;border-radius:50%}
+.net{position:absolute;right:4px;top:68px;width:63px;height:28px;border-left:2px solid #fff;border-right:2px solid #fff;border-bottom:2px solid #fff;clip-path:polygon(0 0,100% 0,82% 100%,18% 100%);opacity:.8}
+.number{position:absolute;left:0;top:4px;min-width:48px;text-align:center;background:#fbbf24;color:#172554;border:3px solid #fff;border-radius:14px;padding:4px 7px;font-size:20px;font-weight:1000;box-shadow:0 4px 0 #b45309}
+#ball{position:absolute;z-index:12;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fb923c,#ea580c 70%);border:3px solid #9a3412;box-shadow:0 5px 7px #0005;display:none}
+#ball:before,#ball:after{content:"";position:absolute;background:#7c2d12}
+#ball:before{width:3px;height:100%;left:48%;transform:rotate(25deg)}
+#ball:after{height:3px;width:100%;top:48%;transform:rotate(-25deg)}
+#aim{position:absolute;z-index:5;bottom:12%;left:50%;width:4px;height:150px;background:#fff8;border-radius:4px;transform-origin:bottom center;display:none}
+#power{position:absolute;z-index:20;bottom:16px;left:50%;transform:translateX(-50%);width:190px;height:12px;background:#ffffff77;border-radius:10px;overflow:hidden}
+#powerFill{height:100%;width:65%;background:#fbbf24;border-radius:10px}
+#hint{position:absolute;z-index:20;bottom:36px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;font-weight:700;text-shadow:0 2px 3px #234;white-space:nowrap}
+#overlay{position:absolute;z-index:50;inset:0;background:#172554dd;display:flex;align-items:center;justify-content:center;padding:25px}
+.card{width:min(420px,94%);background:#fff;border-radius:28px;padding:28px;text-align:center;box-shadow:0 12px 0 #0f172a}
+.card h1{margin:0 0 8px;color:#1e3a8a;font-size:38px}.card p{color:#475569;line-height:1.45}
+button{border:0;border-radius:18px;background:#f97316;color:#fff;font-size:22px;font-weight:900;padding:15px 30px;box-shadow:0 6px 0 #c2410c;cursor:pointer}
+button:active{transform:translateY(4px);box-shadow:0 2px 0 #c2410c}
+#feedback{position:absolute;z-index:30;left:50%;top:44%;transform:translate(-50%,-50%) scale(.7);font-size:42px;font-weight:1000;color:#fff;text-shadow:0 4px 0 #172554;opacity:0;pointer-events:none;transition:.2s}
+#feedback.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.spark{position:absolute;z-index:25;font-size:25px;pointer-events:none;animation:pop .7s ease-out forwards}
+@keyframes pop{to{transform:translate(var(--x),var(--y)) scale(.2) rotate(360deg);opacity:0}}
+.small{font-size:14px}
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="cloud" style="width:100px;height:30px;left:8%;top:17%"></div>
+  <div class="cloud" style="width:120px;height:34px;left:68%;top:11%"></div>
+  <div id="topbar">
+    <div class="pill">🏀 HOOP MATH</div>
+    <div class="pill">⭐ <span id="score">0</span></div>
+    <div class="pill">⏱️ <span id="time">2:00</span></div>
+  </div>
+  <div id="question">Tap the correct hoop!</div>
+  <div id="court"></div>
+  <div id="hoops"></div>
+  <div id="ball"></div>
+  <div id="aim"></div>
+  <div id="feedback"></div>
+  <div id="hint">DRAG + RELEASE to shoot • Aim high for a smooth arc!</div>
+  <div id="power"><div id="powerFill"></div></div>
+
+  <div id="overlay">
+    <div class="card">
+      <h1>🏀 Hoop Math</h1>
+      <p>Solve the math problem, then shoot the basketball into the hoop with the <b>correct answer</b>.</p>
+      <p class="small">Six hoops move back and forth! Clear <b>4 problems per round</b>. Faster baskets earn more points. You have <b>2 minutes</b>!</p>
+      <button id="start">START GAME</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const game=document.getElementById('game'), hoopsEl=document.getElementById('hoops');
+const ball=document.getElementById('ball'), aim=document.getElementById('aim');
+const scoreEl=document.getElementById('score'), timeEl=document.getElementById('time');
+const question=document.getElementById('question'), feedback=document.getElementById('feedback');
+const overlay=document.getElementById('overlay'), powerFill=document.getElementById('powerFill');
+
+let score=0,timeLeft=120,running=false,answer=0,hoops=[];
+let dragging=false, roundProblems=0, problemStarted=0, timer, last=0;
+let ballPhysics={x:0,y:0,vx:0,vy:0,r:19,active:false,shot:false,bounces:0};
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function newProblem(){
+  let a=rnd(1,12),b=rnd(1,12);
+  if(Math.random()<.5){
+    answer=a+b; question.textContent=`${a} + ${b} = ?`;
+  }else{
+    if(a<b)[a,b]=[b,a];
+    answer=a-b; question.textContent=`${a} − ${b} = ?`;
+  }
+  problemStarted=performance.now();
+  makeHoops();
+  resetBall();
+}
+
+function makeHoops(){
+  hoopsEl.innerHTML=''; hoops=[];
+  let answers=new Set([answer]);
+  while(answers.size<6) answers.add(Math.max(0,answer+rnd(-7,7)));
+  const nums=[...answers].sort(()=>Math.random()-.5);
+
+  // Six hoops arranged in two rows, each with a back-and-forth path.
+  const ys=[
+    game.clientHeight*.27, game.clientHeight*.27, game.clientHeight*.27,
+    game.clientHeight*.45, game.clientHeight*.45, game.clientHeight*.45
+  ];
+
+  nums.forEach((n,i)=>{
+    const h=document.createElement('div');
+    h.className='hoop';
+    h.innerHTML=`<div class="number">${n}</div><div class="backboard"></div><div class="rim"></div><div class="net"></div>`;
+    hoopsEl.appendChild(h);
+
+    hoops.push({
+      el:h,num:n,
+      x:20+i*(game.clientWidth-150)/5,
+      y:ys[i],
+      baseX:20+i*(game.clientWidth-150)/5,
+      speed:45+rnd(0,35),
+      direction:i%2===0?1:-1,
+      minX:8,
+      maxX:game.clientWidth-118,
+      phase:i*.9
+    });
+  });
+}
+
+function resetBall(){
+  ballPhysics.x=game.clientWidth/2;
+  ballPhysics.y=game.clientHeight-112;
+  ballPhysics.vx=0;ballPhysics.vy=0;
+  ballPhysics.active=true;ballPhysics.shot=false;ballPhysics.bounces=0;
+  ball.style.display='block';
+  drawBall();
+}
+
+function drawBall(){
+  ball.style.left=(ballPhysics.x-ballPhysics.r)+'px';
+  ball.style.top=(ballPhysics.y-ballPhysics.r)+'px';
+}
+
+function updateHoops(dt){
+  hoops.forEach((h,i)=>{
+    h.x += h.direction*h.speed*dt;
+    if(h.x<=h.minX){h.x=h.minX;h.direction=1}
+    if(h.x>=h.maxX){h.x=h.maxX;h.direction=-1}
+    h.el.style.transform=`translate(${h.x}px,${h.y}px)`;
+  });
+}
+
+function physicsStep(dt){
+  if(!ballPhysics.active || !ballPhysics.shot)return;
+
+  // Gravity + air drag.
+  ballPhysics.vy += 720*dt;
+  ballPhysics.vx *= Math.pow(.996,dt*60);
+  ballPhysics.vy *= Math.pow(.998,dt*60);
+
+  ballPhysics.x += ballPhysics.vx*dt;
+  ballPhysics.y += ballPhysics.vy*dt;
+
+  const w=game.clientWidth,h=game.clientHeight;
+
+  // Side walls.
+  if(ballPhysics.x-ballPhysics.r<0){
+    ballPhysics.x=ballPhysics.r;ballPhysics.vx=Math.abs(ballPhysics.vx)*.72;
+  }
+  if(ballPhysics.x+ballPhysics.r>w){
+    ballPhysics.x=w-ballPhysics.r;ballPhysics.vx=-Math.abs(ballPhysics.vx)*.72;
+  }
+
+  // Ground bounce, with a small energy loss.
+  const ground=h-72;
+  if(ballPhysics.y+ballPhysics.r>ground){
+    ballPhysics.y=ground-ballPhysics.r;
+    if(Math.abs(ballPhysics.vy)>90 && ballPhysics.bounces<5){
+      ballPhysics.vy=-Math.abs(ballPhysics.vy)*.58;
+      ballPhysics.vx*=.84;
+      ballPhysics.bounces++;
+    }else{
+      ballPhysics.vy=0;
+      if(Math.abs(ballPhysics.vx)<20) ballPhysics.vx=0;
+    }
+  }
+
+  checkHoopCollision();
+  drawBall();
+}
+
+function checkHoopCollision(){
+  for(const h of hoops){
+    const rimX=h.x+72, rimY=h.y+67;
+    const d=Math.hypot(ballPhysics.x-rimX,ballPhysics.y-rimY);
+
+    // Scoring zone around the rim.
+    if(d<32 && ballPhysics.vy>0 && ballPhysics.y<rimY+18){
+      if(h.num===answer){
+        scoreBasket(h);
+      }else{
+        // Wrong hoop: bounce away from rim instead of scoring.
+        const dx=ballPhysics.x-rimX,dy=ballPhysics.y-rimY;
+        const len=Math.max(1,Math.hypot(dx,dy));
+        ballPhysics.vx=(dx/len)*240;
+        ballPhysics.vy=-Math.abs(ballPhysics.vy)*.72-80;
+        setFeedback('❌ Wrong hoop!');
+      }
+      return;
+    }
+
+    // Gentle backboard collision.
+    const bx=h.x+91, by=h.y+35;
+    if(ballPhysics.x+ballPhysics.r>bx-5 &&
+       ballPhysics.x-ballPhysics.r<bx+12 &&
+       ballPhysics.y+ballPhysics.r>by-36 &&
+       ballPhysics.y-ballPhysics.r<by+38){
+      ballPhysics.x=bx-ballPhysics.r-5;
+      ballPhysics.vx=-Math.abs(ballPhysics.vx)*.68;
+    }
+  }
+}
+
+function scoreBasket(h){
+  const elapsed=(performance.now()-problemStarted)/1000;
+
+  // Faster answers earn much more. Minimum 50 points.
+  const speedBonus=Math.max(50,Math.round(650-elapsed*75));
+  const comboBonus=roundProblems*100;
+  const earned=speedBonus+comboBonus;
+
+  score+=earned;
+  scoreEl.textContent=score;
+  setFeedback(`🏀 SWISH! +${earned}`);
+  burst(ballPhysics.x,ballPhysics.y);
+
+  ballPhysics.active=false;
+  ball.style.display='none';
+
+  roundProblems++;
+
+  if(roundProblems>=4){
+    setTimeout(()=>{
+      question.textContent='🔥 4 PROBLEMS CLEARED! 🔥';
+      setFeedback('🏆 ROUND COMPLETE!');
+      setTimeout(()=>{
+        roundProblems=0;
+        newProblem();
+      },850);
+    },350);
+  }else{
+    setTimeout(newProblem,600);
+  }
+}
+
+function setFeedback(txt){
+  feedback.textContent=txt;
+  feedback.classList.add('show');
+  setTimeout(()=>feedback.classList.remove('show'),750);
+}
+
+function burst(x,y){
+  ['✨','⭐','💥','🏀','🔥'].forEach((s,i)=>{
+    const e=document.createElement('div');
+    e.className='spark';e.textContent=s;
+    e.style.left=x+'px';e.style.top=y+'px';
+    e.style.setProperty('--x',rnd(-120,120)+'px');
+    e.style.setProperty('--y',rnd(-110,30)+'px');
+    game.appendChild(e);
+    setTimeout(()=>e.remove(),800);
+  });
+}
+
+function shoot(targetX,targetY){
+  dragging=false;aim.style.display='none';
+
+  const sx=ballPhysics.x,sy=ballPhysics.y;
+  let dx=targetX-sx,dy=targetY-sy;
+  const dist=Math.hypot(dx,dy);
+  if(dist<35){return}
+
+  // Aiming is based on where the player releases.
+  // The ball gets a strong upward arc plus horizontal velocity.
+  const power=Math.min(1.25,Math.max(.55,dist/260));
+  ballPhysics.vx=dx*4.0*power;
+  ballPhysics.vy=dy*3.0*power-720*power;
+  ballPhysics.shot=true;
+  ballPhysics.bounces=0;
+  powerFill.style.width='65%';
+}
+
+function format(t){return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`}
+
+function endGame(){
+  running=false;clearInterval(timer);
+  ballPhysics.active=false;
+  overlay.innerHTML=`
+    <div class="card">
+      <h1>⏰ Time!</h1>
+      <p>You scored <b style="font-size:30px;color:#f97316">${score}</b> points.</p>
+      <p>${score>=5000?'🏆 HOOP MATH LEGEND!':score>=2500?'🔥 Amazing shooting!':score>=1000?'🌟 Great job!':'💪 Keep practicing!'}<br>Can you beat your score?</p>
+      <button id="restart">PLAY AGAIN</button>
+    </div>`;
+  overlay.style.display='flex';
+  document.getElementById('restart').onclick=startGame;
+}
+
+function startGame(){
+  overlay.style.display='none';
+  score=0;timeLeft=120;roundProblems=0;
+  scoreEl.textContent='0';timeEl.textContent='2:00';
+  running=true;newProblem();
+
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    if(!running)return;
+    timeLeft--;
+    timeEl.textContent=format(timeLeft);
+    if(timeLeft<=0)endGame();
+  },1000);
+}
+
+function pointerPos(e){
+  const r=game.getBoundingClientRect();
+  // On touchend, e.touches no longer contains the lifted finger (it's empty) —
+  // the ended touch only appears in e.changedTouches. Fall back to that.
+  let p;
+  if(e.touches && e.touches.length){
+    p=e.touches[0];
+  }else if(e.changedTouches && e.changedTouches.length){
+    p=e.changedTouches[0];
+  }else{
+    p=e;
+  }
+  return {x:p.clientX-r.left,y:p.clientY-r.top};
+}
+
+function startDrag(e){
+  if(!running || !ballPhysics.active)return;
+  e.preventDefault();dragging=true;aim.style.display='block';
+}
+
+function drag(e){
+  if(!dragging)return;
+  e.preventDefault();
+  const p=pointerPos(e);
+  const dx=p.x-ballPhysics.x,dy=p.y-ballPhysics.y;
+  const ang=Math.atan2(dx,-dy);
+  aim.style.transform=`translateX(-50%) rotate(${ang}rad)`;
+  const power=Math.min(100,Math.max(20,Math.hypot(dx,dy)/2));
+  powerFill.style.width=power+'%';
+}
+
+function release(e){
+  if(!dragging)return;
+  e.preventDefault();
+  const p=pointerPos(e);
+  shoot(p.x,p.y);
+}
+
+game.addEventListener('mousedown',startDrag);
+game.addEventListener('mousemove',drag);
+game.addEventListener('mouseup',release);
+game.addEventListener('touchstart',startDrag,{passive:false});
+game.addEventListener('touchmove',drag,{passive:false});
+game.addEventListener('touchend',release,{passive:false});
+document.getElementById('start').onclick=startGame;
+
+function loop(ts){
+  if(!last)last=ts;
+  const dt=Math.min(.035,(ts-last)/1000);
+  last=ts;
+  if(running){
+    updateHoops(dt);
+    physicsStep(dt);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+window.addEventListener('resize',()=>{
+  if(running){
+    makeHoops();
+    resetBall();
+  }
+});
+</script>
+</div>
+</body>
+</html>
