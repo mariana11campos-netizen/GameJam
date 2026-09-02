@@ -4,97 +4,142 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purple QR Code Generator</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://tailwindcss.com"></script>
-    <!-- QRCode.js library for generating QR codes -->
+    <style>
+        /* Modern CSS Reset & Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #4c1d95; /* Deep purple background */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Glassmorphism/Clean card UI */
+        .card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ddd6fe;
+            text-align: center;
+        }
+
+        h1 {
+            color: #5b21b6; /* Rich purple heading */
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        p {
+            color: #7c3aed; /* Medium purple text */
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        /* Input styling */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #ddd6fe;
+            font-size: 1rem;
+            color: #2e1065;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #6d28d9; /* Bright purple highlight on focus */
+        }
+
+        /* Live Display QR Container */
+        .qr-display-box {
+            background-color: #f5f3ff; /* Soft purple tint */
+            border: 1px dashed #c084fc;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 240px;
+        }
+
+        /* Ensures the script-generated QR element fits well */
+        #qrcode img, #qrcode canvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+    <!-- Lightweight third-party script to draw the QR graphic natively -->
     <script src="https://cloudflare.com"></script>
 </head>
-<body class="bg-purple-900 min-h-screen flex items-center justify-center p-4 font-sans">
+<body>
 
-    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-purple-200">
-        <h1 class="text-3xl font-extrabold text-purple-800 text-center mb-2">QR Code Generator</h1>
-        <p class="text-purple-600 text-center text-sm mb-6">Enter text or a URL to generate your code instantly</p>
+    <div class="card">
+        <h1>QR Code Generator</h1>
+        <p>Type text or a link below to view your live QR code</p>
         
-        <!-- Input field -->
-        <div class="mb-6">
+        <div class="input-group">
             <input 
                 type="text" 
-                id="text-input" 
-                placeholder="https://example.com" 
-                value="https://example.com"
-                class="w-full px-4 py-3 rounded-lg border-2 border-purple-300 focus:outline-none focus:border-purple-600 text-purple-900 transition-colors"
+                id="qr-input" 
+                placeholder="Type here..." 
+                value="Hello World!"
             />
         </div>
 
-        <!-- QR Code Display Area -->
-        <div class="flex justify-center mb-6 p-4 bg-purple-50 rounded-xl border border-purple-100 min-h-[160px] items-center">
+        <!-- The live QR graphic is injected into this display block directly on the screen -->
+        <div class="qr-display-box">
             <div id="qrcode"></div>
         </div>
-
-        <!-- Action Button -->
-        <button 
-            id="download-btn" 
-            class="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg"
-        >
-            <span>Download PNG Image</span>
-        </button>
     </div>
 
     <script>
-        const textInput = document.getElementById('text-input');
-        const qrcodeContainer = document.getElementById('qrcode');
-        const downloadBtn = document.getElementById('download-btn');
+        const qrInput = document.getElementById('qr-input');
+        const qrContainer = document.getElementById('qrcode');
 
-        // Create the QR Code instance
-        const qrcode = new QRCode(qrcodeContainer, {
-            text: textInput.value,
-            width: 200,
-            height: 200,
-            colorDark: "#581c87", // Deep purple color
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-
-        // Update QR code on input
-        textInput.addEventListener('input', (e) => {
-            const value = e.target.value.trim();
-            qrcodeContainer.innerHTML = ''; // Clear old QR
-            if (value) {
-                new QRCode(qrcodeContainer, {
-                    text: value,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#581c87",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                downloadBtn.disabled = false;
-                downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                downloadBtn.disabled = true;
-                downloadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        // Function to clear and generate a fresh live code
+        function generateLiveQR(text) {
+            qrContainer.innerHTML = ''; // Keep screen clear of old fragments
+            
+            if (text.trim() === '') {
+                return; // Leave empty if text is deleted
             }
-        });
 
-        // Handle Image Download
-        downloadBtn.addEventListener('click', () => {
-            const img = qrcodeContainer.querySelector('img');
-            if (img) {
-                const link = document.createElement('a');
-                link.download = 'qrcode.png';
-                link.href = img.src;
-                link.click();
-            } else {
-                // Fallback for canvas-only generation if image hasn't fully rendered
-                const canvas = qrcodeContainer.querySelector('canvas');
-                if (canvas) {
-                    const link = document.createElement('a');
-                    link.download = 'qrcode.png';
-                    link.href = canvas.toDataURL();
-                    link.click();
-                }
-            }
+            new QRCode(qrContainer, {
+                text: text,
+                width: 200,
+                height: 200,
+                colorDark: "#4c1d95", // Dark purple blocks
+                colorLight: "#ffffff", // Crisp white background
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Initialize immediately with the default value
+        generateLiveQR(qrInput.value);
+
+        // Instantly re-render on the screen on every keystroke
+        qrInput.addEventListener('input', (e) => {
+            generateLiveQR(e.target.value);
         });
     </script>
+
 </body>
 </html>
