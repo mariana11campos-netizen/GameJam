@@ -22,7 +22,7 @@
             padding: 20px;
         }
 
-        /* Glassmorphism/Clean card UI */
+        /* Clean card UI */
         .card {
             background-color: #ffffff;
             border-radius: 16px;
@@ -79,15 +79,15 @@
             min-height: 240px;
         }
 
-        /* Ensures the script-generated QR element fits well */
+        /* Ensures the script-generated QR element fits well on screen */
         #qrcode img, #qrcode canvas {
             max-width: 100%;
             height: auto;
             display: block;
         }
     </style>
-    <!-- Lightweight third-party script to draw the QR graphic natively -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Updated, highly reliable script link to draw the QR graphic natively -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
@@ -113,26 +113,35 @@
     <script>
         const qrInput = document.getElementById('qr-input');
         const qrContainer = document.getElementById('qrcode');
+        let qrcodeInstance = null;
 
-        // Function to clear and generate a fresh live code
+        // Function to safely update the code on screen
         function generateLiveQR(text) {
-            qrContainer.innerHTML = ''; // Keep screen clear of old fragments
+            const cleanedText = text.trim();
             
-            if (text.trim() === '') {
-                return; // Leave empty if text is deleted
+            if (cleanedText === '') {
+                qrContainer.innerHTML = ''; // Keep screen clear of old fragments if input is empty
+                qrcodeInstance = null;
+                return;
             }
 
-            new QRCode(qrContainer, {
-                text: text,
-                width: 200,
-                height: 200,
-                colorDark: "#4c1d95", // Dark purple blocks
-                colorLight: "#ffffff", // Crisp white background
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            if (qrcodeInstance) {
+                // Instantly re-render on the screen using the existing instance
+                qrcodeInstance.makeCode(cleanedText);
+            } else {
+                // Initialize fresh live code instance
+                qrcodeInstance = new QRCode(qrContainer, {
+                    text: cleanedText,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#4c1d95", // Dark purple blocks
+                    colorLight: "#ffffff", // Crisp white background
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
         }
 
-        // Initialize immediately with the default value
+        // Initialize immediately with the default value on page load
         generateLiveQR(qrInput.value);
 
         // Instantly re-render on the screen on every keystroke
@@ -143,3 +152,4 @@
 
 </body>
 </html>
+
